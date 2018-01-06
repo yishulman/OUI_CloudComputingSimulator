@@ -1,5 +1,8 @@
+CC=gcc
+LDFLAGS=-lpthread
+
 all:
-	gcc server.c -o cloudsrv
-	gcc client.c -o cloudcli
+	$(CC) server.c -o cloudsrv $(LDFLAGS)
+	$(CC) client.c -o cloudcli $(LDFLAGS)
 clean:
 	rm -f *.o cloudsrv cloudcli

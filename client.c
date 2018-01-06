@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "network.h"
+#include "message.h"
 
 void print_help()
 {
@@ -51,22 +52,23 @@ out_err:
 
 int do_client(int sockfd) 
 {
-	char buffer[MTU];
+	message msg;
 	ssize_t ret = 0;
 
 	while(1) {
-		memset(buffer, 0, sizeof(buffer));
-		fgets(buffer, sizeof(buffer), stdin);
+		memset(msg.text, 0, sizeof(msg.text));
+		msg.header.source = SOURCE_CLIENT;
+		fgets(msg.text, sizeof(msg.text), stdin);
 
-		if (ret = send(sockfd, buffer, sizeof(buffer), 0), ret <= 0)
+		if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0)
 			break;
 
-		memset(buffer, 0, sizeof(buffer));
+		/*memset(buffer, 0, sizeof(buffer));
 
 		if(ret = recv(sockfd, buffer, sizeof(buffer), 0), ret <= 0)
 			break;
 
-		printf("RECV: %s \n", buffer);
+		printf("RECV: %s \n", buffer);*/
 	}
 
 	return 0;

@@ -2,6 +2,7 @@
 #define __MESSAGE_H
 
 #include "types.h"
+#include "network.h"
 
 typedef struct __msg_header{
 	u8 source;
