@@ -7,7 +7,7 @@
 
 void print_help()
 {
-	printf("USAGE: cloudcli <hostname> <port>\n");
+	printf("USAGE: cloudcli <hostname> <command>\n");
 }
 
 /**
@@ -50,25 +50,19 @@ out_err:
 	return -1;
 }
 
-int do_client(int sockfd) 
+int do_client(int sockfd, char* text) 
 {
 	message msg;
 	ssize_t ret = 0;
 
-	while(1) {
-		memset(msg.text, 0, sizeof(msg.text));
-		msg.header.source = SOURCE_CLIENT;
-		fgets(msg.text, sizeof(msg.text), stdin);
+	memcpy(msg.text, text, sizeof(msg.text));
+	msg.header.source = SOURCE_CLIENT;
 
-		if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0)
-			break;
+	printf("%s\n", msg.text);
 
-		/*memset(buffer, 0, sizeof(buffer));
-
-		if(ret = recv(sockfd, buffer, sizeof(buffer), 0), ret <= 0)
-			break;
-
-		printf("RECV: %s \n", buffer);*/
+	if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
+		perror("Send");
+		return -1;
 	}
 
 	return 0;
@@ -76,9 +70,10 @@ int do_client(int sockfd)
 
 int main(int argc, char *argv[])
 {
-  int 					sockfd 		= 0;
-  short 				port_addr 	= 0;
-  char					*hostname	= 0;
+  	int 					sockfd 		= 0;
+  	short 					port_addr 	= 0;
+  	char					*hostname	= 0;
+  	char 					text[MSG_TEXT_SIZE] = {0};
 
 	if (argc < 3) {
 		print_help();
@@ -86,13 +81,17 @@ int main(int argc, char *argv[])
 	}
 
 	hostname = argv[1];
-	port_addr = (short)atoi(argv[2]);
 
-	sockfd = init_client(hostname, port_addr);
+	snprintf(text, sizeof(text), "%s", argv[2]);
+	for(int i = 3; i < argc; i++) {
+		snprintf(text, sizeof(text), "%s %s", text, argv[i]);
+	}
+
+	sockfd = init_client(hostname, SERVER_PORT);
 
 	printf("CONNECTED\n");
 
-	do_client(sockfd);
+	do_client(sockfd, text);
 
 out:
 	close(sockfd);

@@ -23,7 +23,7 @@ void print_help()
  *	This function initialize the server's socket
  *	and binds it to the given port address.
  **/
-int init_server(short port_addr)
+int init_server()
 {
 	int 				sockfd = 0;
 	struct sockaddr_in 	serv_addr;
@@ -37,7 +37,7 @@ int init_server(short port_addr)
 
 	/* Initialize server address */
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(port_addr);
+	serv_addr.sin_port = htons(SERVER_PORT);
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 
 	/* Bind socket to address */
@@ -153,7 +153,7 @@ void server_tx(int sockfd)
 			msg = msg_queue_pop(&pending_queue);
 			pthread_mutex_unlock(&queue_mutex);
 			
-			printf("TX: %s", msg->text);
+			printf("TX: %s\n", msg->text);
 
 			/* TODO: choose resource here and send the message to it. */
 		}
@@ -163,22 +163,15 @@ void server_tx(int sockfd)
 int main(int argc, char *argv[])
 {
 	int 				sockfd = 0;
-	short 				port_addr;
 	pthread_t 			rx_thread, tx_thread;
 	void 				*ret_thread;
-
-	if (argc < 2) {
-		print_help();
-		return -1;
-	}
 
 	if (pthread_mutex_init(&queue_mutex, NULL)) {
 		perror("Creating mutex");
 		return -1;
 	}
 
-	port_addr = (short)atoi(argv[1]);
-	if (sockfd = init_server(port_addr), sockfd < 0) {
+	if (sockfd = init_server(), sockfd < 0) {
 		perror("init_server");
 		return -1;
 	}

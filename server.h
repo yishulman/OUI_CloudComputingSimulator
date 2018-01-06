@@ -5,7 +5,7 @@
 #define MAX_RESOURCES 5
 
 void print_help();
-int init_server(short port_addr);
+int init_server();
 void server_rx(int sockfd);
 void server_tx(int sockfd);
 

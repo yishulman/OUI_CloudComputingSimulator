@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <netdb.h>
 
-#define MTU 1500
+#define MTU (1500)
+#define SERVER_PORT	(4321)
 
 #endif
