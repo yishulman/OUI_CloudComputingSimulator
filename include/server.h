@@ -4,8 +4,8 @@
 #define SOCK_BACKLOG 5
 #define MAX_RESOURCES 5
 
-void print_help();
-int init_server();
+void server_print_help();
+int server_init();
 void server_rx(int sockfd);
 void server_tx(int sockfd);
 

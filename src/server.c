@@ -14,7 +14,7 @@ pthread_mutex_t 	queue_mutex;
 msg_queue 			pending_queue;
 resource 			*resources_table[MAX_RESOURCES] = {0};
 
-void print_help()
+void server_print_help()
 {
 	printf("USAGE: cloudsrv <port>\n");
 }
@@ -23,7 +23,7 @@ void print_help()
  *	This function initialize the server's socket
  *	and binds it to the given port address.
  **/
-int init_server()
+int server_init()
 {
 	int 				sockfd = 0;
 	struct sockaddr_in 	serv_addr;
@@ -60,7 +60,7 @@ out_err:
   	return -1;
 }
 
-int handle_client_msg(msg_queue *queue, message *msg)
+int server_handle_client_msg(msg_queue *queue, message *msg)
 {
 	/* TODO: validate message here */
 
@@ -72,7 +72,7 @@ int handle_client_msg(msg_queue *queue, message *msg)
 	return 0;
 }
 
-int handle_resource_msg(resource **table, message *msg)
+int server_handle_resource_msg(resource **table, message *msg)
 {
 	resource *r;
 	int i;
@@ -89,12 +89,6 @@ int handle_resource_msg(resource **table, message *msg)
 	/* TODO: fill resource here */
 
 	return 0;
-}
-
-static void* run_server_rx(void* arg) 
-{
-	server_rx(*((int*)arg));
-	return NULL;
 }
 
 void server_rx(int sockfd)
@@ -124,23 +118,17 @@ void server_rx(int sockfd)
 
 		switch (msg->header.source) {
 			case SOURCE_CLIENT:
-			handle_client_msg(&pending_queue, msg);
+			server_handle_client_msg(&pending_queue, msg);
 			break;
 
 			case SOURCE_RESOURCE:
-			handle_resource_msg(resources_table, msg);
+			server_handle_resource_msg(resources_table, msg);
 			break;
 
 			default:
 			break;
 		}
 	}
-}
-
-static void* run_server_tx(void* arg) 
-{
-	server_tx(*((int*)arg));
-	return NULL;
 }
 
 void server_tx(int sockfd)
@@ -158,30 +146,4 @@ void server_tx(int sockfd)
 			/* TODO: choose resource here and send the message to it. */
 		}
 	}
-}
-
-int main(int argc, char *argv[])
-{
-	int 				sockfd = 0;
-	pthread_t 			rx_thread, tx_thread;
-	void 				*ret_thread;
-
-	if (pthread_mutex_init(&queue_mutex, NULL)) {
-		perror("Creating mutex");
-		return -1;
-	}
-
-	if (sockfd = init_server(), sockfd < 0) {
-		perror("init_server");
-		return -1;
-	}
-
-	pthread_create(&rx_thread, NULL, run_server_rx, (void*)&sockfd);
-	pthread_create(&tx_thread, NULL, run_server_tx, (void*)&sockfd);
-
-	pthread_join(rx_thread, &ret_thread);
-	pthread_join(tx_thread, &ret_thread);
-
-	close(sockfd);
-	return 0;
 }
