@@ -12,6 +12,6 @@ all:
 	$(CC) $(INCLUDE) $(SRC_FILES) -c
 	$(CC) $(INCLUDE) server_main.c server.o -o cloudsrv.elf $(LDFLAGS)
 	$(CC) $(INCLUDE) client_main.c client.o -o cloudcli.elf $(LDFLAGS)
-	$(CCT) $(TESTS_INCLUDE) $(GTEST_LIB) $(TEST_FILES) *.o -o run_tests.elf $(LDFLAGS)
+	$(CCT) $(INCLUDE) $(TESTS_INCLUDE) $(GTEST_LIB) $(TEST_FILES) *.o -o run_tests.elf $(LDFLAGS)
 clean:
 	rm -f *.o *.elf
