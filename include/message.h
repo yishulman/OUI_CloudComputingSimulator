@@ -7,6 +7,7 @@
 typedef struct __msg_header{
 	u8 source;
 	u8 req_type;
+	u8	ip_addr[MAX_IP_ADDR];
 	u16 port_addr;
 	u16 memory;
 	u16 job_id;

@@ -64,7 +64,6 @@ int server_handle_client_msg(msg_queue *queue, message *msg)
 {
 	/* TODO: validate message here */
 
-
 	pthread_mutex_lock(&queue_mutex);
 	msg_queue_push(queue, msg);
 	pthread_mutex_unlock(&queue_mutex);
