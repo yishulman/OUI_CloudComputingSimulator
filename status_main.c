@@ -2,6 +2,7 @@
 #include <string.h>
 #include "message.h"
 #include "client.h"
+#include "socket_wrap.h"
 
 int main(int argc, char *argv[])
 {
@@ -17,7 +18,7 @@ int main(int argc, char *argv[])
 
 	client_ip = argv[1];
 
-	if (client_init(client_ip, &sockfd, &port_addr)) {
+	if (socket_wrap_listen(&sockfd, client_ip, &port_addr)) {
 		fprintf(stderr, "Client init failed.\n");
 		goto out_ret;
 	}

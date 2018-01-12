@@ -19,50 +19,17 @@ void server_print_help()
 	printf("USAGE: cloudsrv <port>\n");
 }
 
-/**
- *	This function initialize the server's socket
- *	and binds it to the given port address.
- **/
-int server_init()
+int server_handle_client_msg(int sockfd, msg_queue *queue, message *msg)
 {
-	int 				sockfd = 0;
-	struct sockaddr_in 	serv_addr;
-	
-	/* Open socket */
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0) {
-		perror("Open socket");
-		goto out_ret;
-	}
+	ssize_t				ret;
 
-	/* Initialize server address */
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(SERVER_PORT);
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-
-	/* Bind socket to address */
-	if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-  		perror("Bind");
-		goto out_err;
-	}
-
-	/* Listen to new connections */
-  	if (listen(sockfd, SOCK_BACKLOG) < 0) {
-  		perror("Listen");
-  		goto out_err;
-  	}
-
-out_ret:
-	return sockfd;
-
-out_err:
-	close(sockfd);
-  	return -1;
-}
-
-int server_handle_client_msg(msg_queue *queue, message *msg)
-{
 	/* TODO: validate message here */
+	msg->header.req_type = TYPE_ACK;
+
+	if (ret = send(sockfd, &msg, sizeof(message), 0), ret <= 0) {
+		perror("Recv");
+		return -1;
+	}
 
 	pthread_mutex_lock(&queue_mutex);
 	msg_queue_push(queue, msg);
@@ -117,7 +84,7 @@ void server_rx(int sockfd)
 
 		switch (msg->header.source) {
 			case SOURCE_CLIENT:
-			server_handle_client_msg(&pending_queue, msg);
+			server_handle_client_msg(newsockfd, &pending_queue, msg);
 			break;
 
 			case SOURCE_RESOURCE:
