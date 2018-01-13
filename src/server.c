@@ -20,7 +20,7 @@ void server_print_help()
 	printf("USAGE: cloudsrv <port>\n");
 }
 
-static int server_add_resource(int newsockfd, resource **table)
+static int server_add_resource(int newsockfd, int res_id, resource **table)
 {
 	resource *r = NULL;
 	int i;
@@ -41,11 +41,28 @@ static int server_add_resource(int newsockfd, resource **table)
 	}
 
 	r->sock = newsockfd;
-	r->cpu_speed = 0;
+	r->res_id = res_id;
 	r->memory = 10000;
 	r->status = STATUS_AVAILABLE;
 
 	pthread_mutex_unlock(&resource_mutex);
+
+	printf("Resource %d registered.\n", res_id);
+
+	return 0;
+}
+
+static int server_remove_resource(int res_id, resource **table)
+{
+	for (int i = 0; i < MAX_RESOURCES; i++) {
+		if (table[i] != NULL && table[i]->res_id == res_id) {
+			free(table[i]);
+			table[i] = NULL;
+			break;
+		}
+	}
+
+	printf("Resource %d unregistered.\n", res_id);
 
 	return 0;
 }
@@ -54,7 +71,6 @@ int server_handle_client_msg(int sockfd, msg_queue *queue, message *msg)
 {
 	ssize_t				ret;
 
-	/* TODO: validate message here */
 	msg->header.req_type = TYPE_ACK;
 
 	if (ret = send(sockfd, msg, sizeof(message), 0), ret <= 0) {
@@ -71,11 +87,29 @@ int server_handle_client_msg(int sockfd, msg_queue *queue, message *msg)
 
 int server_handle_resource_msg(int newsockfd, resource **table, message *msg)
 {
+	static int res_id = 0;
 	int ret = 0;
 
 	switch(msg->header.req_type) {
 		case TYPE_ADD_RESOURCE:
-		ret = server_add_resource(newsockfd, table);
+		ret = server_add_resource(newsockfd, res_id, table);
+
+		if (0 == ret) {
+			msg->header.req_type = TYPE_ACK;
+			msg->header.job_id = res_id;
+			res_id++;
+		}
+		else
+			msg->header.req_type = TYPE_NACK;
+
+		if (ret = send(newsockfd, msg, sizeof(message), 0), ret <= 0) {
+			perror("Recv");
+			return -1;
+		}
+		break;
+
+		case TYPE_REMOVE_RESOURCE:
+		server_remove_resource(msg->header.job_id, table);
 		break;
 
 		default:
@@ -83,15 +117,6 @@ int server_handle_resource_msg(int newsockfd, resource **table, message *msg)
 		ret = -1;
 	}
 
-	if (0 == ret)
-		msg->header.req_type = TYPE_ACK;
-	else
-		msg->header.req_type = TYPE_NACK;
-
-	if (ret = send(newsockfd, msg, sizeof(message), 0), ret <= 0) {
-		perror("Recv");
-		return -1;
-	}
 
 	return 0;
 }
@@ -149,8 +174,6 @@ void server_tx(int sockfd)
 			pthread_mutex_lock(&queue_mutex);
 			msg = msg_queue_pop(&pending_queue);
 			pthread_mutex_unlock(&queue_mutex);
-			
-			printf("TX: %s\n", msg->text);
 
 			pthread_mutex_lock(&resource_mutex);
 			for (i = 0; i < MAX_RESOURCES; i++) {

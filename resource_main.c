@@ -1,8 +1,18 @@
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
+#include <stdlib.h>
+
 #include "message.h"
 #include "resource.h"
 #include "socket_wrap.h"
+
+static void *run_resource_run(void *args)
+{
+	int **iarg = (int**)args;
+	resource_run(iarg[0], *iarg[1]);
+	return NULL;
+}
 
 int main(int argc, char *argv[])
 {
@@ -10,6 +20,12 @@ int main(int argc, char *argv[])
   	short 					port_addr 	= 0;
   	char					*client_ip	= 0;
   	char 					text[MSG_TEXT_SIZE] = {0};
+  	int 					*args[2];
+  	pthread_t 				thread;
+  	void 					*ret_thread;
+  	char 					c;
+  	int 					res_id;
+  	int 					*running = malloc(sizeof(int));
 
 	if (socket_wrap_connect(&sockfd, SERVER_IP, SERVER_PORT)) {
 		fprintf(stderr, "Resource init failed.\n");
@@ -18,15 +34,34 @@ int main(int argc, char *argv[])
 
 	printf("CONNECTED\n");
 
-	if (resource_register(sockfd)) {
+	if (res_id = resource_register(sockfd), res_id < 0) {
 		fprintf(stderr, "Registration failed.\n");
 		goto out;
 	}
 
-	if (resource_run(sockfd)) {
-		fprintf(stderr, "Running failed.\n");
-		goto out;
+	args[0] = running;
+	args[1] = &sockfd;
+
+  	*running = 1;
+	pthread_create(&thread, NULL, run_resource_run, (void*)args);
+
+	printf("Resource is running. Press any key to exit.\n");
+
+	scanf("%c", &c);
+	printf("Exiting\n");
+	*running = 0;
+	close(sockfd);
+
+	pthread_join(thread, &ret_thread);
+
+	if (socket_wrap_connect(&sockfd, SERVER_IP, SERVER_PORT)) {
+		fprintf(stderr, "Resource init failed.\n");
+		goto out_ret;
 	}
+
+	resource_unregister(res_id, sockfd);
+
+	free(running);
 
 out:
 	close(sockfd);

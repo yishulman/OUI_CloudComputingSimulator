@@ -8,6 +8,8 @@
 #include "resource.h"
 #include "socket_wrap.h"
 
+extern int running;
+
 int resource_register(int sockfd)
 {
 	message msg;
@@ -39,60 +41,43 @@ int resource_register(int sockfd)
 		return -1;
 	}
 
-	return 0;
+	return msg.header.job_id;
 }
 
-static void parse_args(char *cmd, char **argv)
+void resource_unregister(int res_id, int sockfd)
 {
-	char * pch;
-	printf ("Splitting string \"%s\" into tokens:\n", cmd);
-	pch = strtok (cmd ," \t");
-	while (pch != NULL)
-	{
-		*argv = pch;
-		printf("%s ", *argv);
-		argv++;
-		pch = strtok (NULL, " ");
+	message msg;
+	ssize_t ret;
+
+	message_fill(&msg, SOURCE_RESOURCE, TYPE_REMOVE_RESOURCE, NULL, 0, 0, res_id, NULL);
+
+	if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
+		perror("Send");
 	}
 }
 
-int resource_run(int sockfd)
+int resource_run(int *running, int sockfd)
 {
-	char *argv[MAX_ARGS];
 	message msg;
 	ssize_t ret;
 	int client_sock;
 	pid_t child_pid;
 	int child_status;
 	FILE *fp;
+	char cmd[sizeof(msg.text) + 4];
 
-	while (1) {
+	while (*running) {
 		if (ret = recv(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
-			perror("Recv");
 			continue;
 		}
 
 		printf("Recv command: %s\n", msg.text);
 
-		memset(argv, 0, sizeof(argv));
-
-		//parse_args(msg.text, argv);
-
-		/* child_pid = fork();
-		if(child_pid == 0) {
-		    execv(argv[0], argv);
-		    
-
-		    fprintf(stderr, "Unknown command\n");
-		    exit(-1);
-		}
-
-       	wait(&child_status); */
-
-
+		/* run command on shell and get the output */
   		fp = popen(msg.text, "r");
   		memset(msg.text, 0, sizeof(msg.text));
- 		fread(msg.text, 1, sizeof(msg.text), fp);
+ 		if (fread(msg.text, 1, sizeof(msg.text), fp) <= 0)
+ 			sprintf(msg.text, "Invalid command.");
   		pclose(fp);
 
 		if (socket_wrap_connect(&client_sock, (char*)msg.header.ip_addr, msg.header.port_addr)) {
