@@ -11,12 +11,42 @@
 #include "resource.h"
 
 pthread_mutex_t 	queue_mutex;
+pthread_mutex_t 	resource_mutex;
 msg_queue 			pending_queue;
 resource 			*resources_table[MAX_RESOURCES] = {0};
 
 void server_print_help()
 {
 	printf("USAGE: cloudsrv <port>\n");
+}
+
+static int server_add_resource(int newsockfd, resource **table)
+{
+	resource *r = NULL;
+	int i;
+
+	pthread_mutex_lock(&resource_mutex);
+
+	for (i = 0; i < MAX_RESOURCES; i++) {
+		if (table[i] == NULL) {
+			table[i] = (resource*)malloc(sizeof(resource));
+			r = table[i];
+		}
+	}
+
+	if (!r) {
+		fprintf(stderr, "Resource table full");
+		return -1;
+	}
+
+	r->sock = newsockfd;
+	r->cpu_speed = 0;
+	r->memory = 10000;
+	r->status = STATUS_AVAILABLE;
+
+	pthread_mutex_unlock(&resource_mutex);
+
+	return 0;
 }
 
 int server_handle_client_msg(int sockfd, msg_queue *queue, message *msg)
@@ -26,7 +56,7 @@ int server_handle_client_msg(int sockfd, msg_queue *queue, message *msg)
 	/* TODO: validate message here */
 	msg->header.req_type = TYPE_ACK;
 
-	if (ret = send(sockfd, &msg, sizeof(message), 0), ret <= 0) {
+	if (ret = send(sockfd, msg, sizeof(message), 0), ret <= 0) {
 		perror("Recv");
 		return -1;
 	}
@@ -38,21 +68,29 @@ int server_handle_client_msg(int sockfd, msg_queue *queue, message *msg)
 	return 0;
 }
 
-int server_handle_resource_msg(resource **table, message *msg)
+int server_handle_resource_msg(int newsockfd, resource **table, message *msg)
 {
-	resource *r;
-	int i;
+	int ret = 0;
 
-	/* TODO: validate message here */
+	switch(msg->header.req_type) {
+		case TYPE_ADD_RESOURCE:
+		ret = server_add_resource(newsockfd, table);
+		break;
 
-	for (i = 0; i < MAX_RESOURCES; i++) {
-		if (table[i] != NULL) {
-			table[i] = (resource*)malloc(sizeof(resource));
-			r = table[i];
-		}
+		default:
+		fprintf(stderr, "Resource sent invalid message type: %d\n", msg->header.req_type);
+		ret = -1;
 	}
 
-	/* TODO: fill resource here */
+	if (0 == ret)
+		msg->header.req_type = TYPE_ACK;
+	else
+		msg->header.req_type = TYPE_NACK;
+
+	if (ret = send(newsockfd, msg, sizeof(message), 0), ret <= 0) {
+		perror("Recv");
+		return -1;
+	}
 
 	return 0;
 }
@@ -88,7 +126,7 @@ void server_rx(int sockfd)
 			break;
 
 			case SOURCE_RESOURCE:
-			server_handle_resource_msg(resources_table, msg);
+			server_handle_resource_msg(newsockfd, resources_table, msg);
 			break;
 
 			default:
@@ -99,7 +137,11 @@ void server_rx(int sockfd)
 
 void server_tx(int sockfd)
 {
+	int i;
 	message *msg;
+	resource *r;
+	ssize_t ret;
+
 	while(1) {
 		sleep(1);
 		if (!msg_queue_is_empty(&pending_queue)) {
@@ -109,7 +151,18 @@ void server_tx(int sockfd)
 			
 			printf("TX: %s\n", msg->text);
 
-			/* TODO: choose resource here and send the message to it. */
+			pthread_mutex_lock(&resource_mutex);
+			for (i = 0; i < MAX_RESOURCES; i++) {
+				if (resources_table[i] != NULL && resources_table[i]->status == STATUS_AVAILABLE) {
+					r = resources_table[i];
+				}
+			}
+			pthread_mutex_unlock(&resource_mutex);
+
+			if (ret = send(r->sock, msg, sizeof(message), 0), ret <= 0) {
+				perror("Recv");
+				continue;
+			}
 		}
 	}
 }

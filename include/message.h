@@ -38,6 +38,13 @@ enum msg_type_e {
 	TYPE_JOB_DONE
 };
 
-void message_fill(message *msg, u8 source, u8 req_type, char* ip_addr, u16 port_addr, u16 memory, u16 job_id, char *text);
+void message_fill(message *msg,
+					u8 source,
+					u8 req_type, 
+					char* ip_addr, 
+					u16 port_addr, 
+					u16 memory, 
+					u16 job_id, 
+					char *text);
 
 #endif

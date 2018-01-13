@@ -6,6 +6,7 @@
 #include "socket_wrap.h"
 
 extern pthread_mutex_t 	queue_mutex;
+extern pthread_mutex_t 	resource_mutex;
 
 static void* run_server_rx(void* arg) 
 {
@@ -30,6 +31,12 @@ int main(int argc, char *argv[])
 		perror("Creating mutex");
 		return -1;
 	}
+
+	if (pthread_mutex_init(&resource_mutex, NULL)) {
+		perror("Creating mutex");
+		return -1;
+	}
+
 
 	if (socket_wrap_listen(&sockfd, SERVER_IP, &port_addr)) {
 		perror("server_init");

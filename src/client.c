@@ -21,13 +21,7 @@ int client_run_job(int sockfd, char* job, char *ip, short port)
 	int newsockfd;
 	ssize_t ret = 0;
 
-	memcpy(msg.text, job, sizeof(msg.text));
-	msg.header.source = SOURCE_CLIENT;
-	memcpy(msg.header.ip_addr, ip, MAX_IP_ADDR);
-	msg.header.port_addr = port;
-	msg.header.req_type = TYPE_COMMAND;
-	msg.header.job_id = 1;
-	msg.header.length = strnlen(job, sizeof(msg.text));
+	message_fill(&msg, SOURCE_CLIENT, TYPE_COMMAND, ip, port, 0, 1, job);
 
 	if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
 		perror("Send");
