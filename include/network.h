@@ -12,5 +12,6 @@
 #define SERVER_PORT	(4321)
 #define SERVER_IP "127.0.0.1"
 #define MAX_IP_ADDR (16)
+#define MAX_ARGS	256
 
 #endif

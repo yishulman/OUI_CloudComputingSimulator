@@ -31,6 +31,7 @@ static int server_add_resource(int newsockfd, resource **table)
 		if (table[i] == NULL) {
 			table[i] = (resource*)malloc(sizeof(resource));
 			r = table[i];
+			break;
 		}
 	}
 

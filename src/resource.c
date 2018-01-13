@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #include "network.h"
 #include "message.h"
 #include "resource.h"
@@ -39,11 +42,29 @@ int resource_register(int sockfd)
 	return 0;
 }
 
+static void parse_args(char *cmd, char **argv)
+{
+	char * pch;
+	printf ("Splitting string \"%s\" into tokens:\n", cmd);
+	pch = strtok (cmd ," \t");
+	while (pch != NULL)
+	{
+		*argv = pch;
+		printf("%s ", *argv);
+		argv++;
+		pch = strtok (NULL, " ");
+	}
+}
+
 int resource_run(int sockfd)
 {
+	char *argv[MAX_ARGS];
 	message msg;
 	ssize_t ret;
 	int client_sock;
+	pid_t child_pid;
+	int child_status;
+	FILE *fp;
 
 	while (1) {
 		if (ret = recv(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
@@ -53,7 +74,26 @@ int resource_run(int sockfd)
 
 		printf("Recv command: %s\n", msg.text);
 
-		/* TODO: execute command here */
+		memset(argv, 0, sizeof(argv));
+
+		//parse_args(msg.text, argv);
+
+		/* child_pid = fork();
+		if(child_pid == 0) {
+		    execv(argv[0], argv);
+		    
+
+		    fprintf(stderr, "Unknown command\n");
+		    exit(-1);
+		}
+
+       	wait(&child_status); */
+
+
+  		fp = popen(msg.text, "r");
+  		memset(msg.text, 0, sizeof(msg.text));
+ 		fread(msg.text, 1, sizeof(msg.text), fp);
+  		pclose(fp);
 
 		if (socket_wrap_connect(&client_sock, (char*)msg.header.ip_addr, msg.header.port_addr)) {
 			continue;
