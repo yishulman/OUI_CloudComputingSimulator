@@ -4,11 +4,11 @@
 void message_fill(message *msg,
 					u8 source,
 					u8 req_type, 
-					char* ip_addr, 
+					const char* ip_addr, 
 					u16 port_addr, 
 					u16 memory, 
 					u16 job_id, 
-					char *text)
+					const char *text)
 {
 	memset(msg, 0, sizeof(message));
 	msg->header.source = source;
