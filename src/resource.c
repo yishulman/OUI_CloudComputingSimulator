@@ -75,14 +75,24 @@ int resource_run(int *running, int sockfd)
 
 		/* run command on shell and get the output */
   		fp = popen(msg.text, "r");
-  		memset(msg.text, 0, sizeof(msg.text));
- 		if (fread(msg.text, 1, sizeof(msg.text), fp) <= 0)
- 			sprintf(msg.text, "Invalid command.");
-  		pclose(fp);
+		
 
 		if (socket_wrap_connect(&client_sock, (char*)msg.header.ip_addr, msg.header.port_addr)) {
 			continue;
 		}
+  		memset(msg.text, 0, sizeof(msg.text));
+		msg.header.req_type = TYPE_OUTPUT_STREAM;
+ 		while(fread(msg.text, 1, sizeof(msg.text), fp)) {
+			
+			if (ret = send(client_sock, &msg, sizeof(msg), 0), ret <= 0) {
+				perror("Send");
+				continue;
+			}
+  			memset(msg.text, 0, sizeof(msg.text));
+		};
+  	
+		pclose(fp);
+
 
 		msg.header.req_type = TYPE_JOB_DONE;
 

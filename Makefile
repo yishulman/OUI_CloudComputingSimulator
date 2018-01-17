@@ -19,6 +19,6 @@ all:
 	$(CC) $(INCLUDE) job_main.c $(OBJ_FILES) -o run_job.elf $(LDFLAGS)
 	$(CC) $(INCLUDE) resource_main.c $(OBJ_FILES) -o run_resource.elf $(LDFLAGS)
 	# unit tests
-	$(CCT) $(INCLUDE) $(TESTS_INCLUDE) $(GTEST_LIB) $(TEST_FILES) $(OBJ_FILES) -o run_tests.elf $(LDFLAGS)
+	#$(CCT) $(INCLUDE) $(TESTS_INCLUDE) $(GTEST_LIB) $(TEST_FILES) $(OBJ_FILES) -o run_tests.elf $(LDFLAGS)
 clean:
 	rm -f *.o *.elf

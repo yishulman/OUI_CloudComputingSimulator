@@ -167,11 +167,12 @@ void server_tx(int sockfd)
 	message *msg;
 	resource *r;
 	ssize_t ret;
-
+	
 	while(1) {
 		sleep(1);
 		if (!msg_queue_is_empty(&pending_queue)) {
 			pthread_mutex_lock(&queue_mutex);
+			r = NULL;
 			msg = msg_queue_pop(&pending_queue);
 			pthread_mutex_unlock(&queue_mutex);
 
@@ -179,13 +180,16 @@ void server_tx(int sockfd)
 			for (i = 0; i < MAX_RESOURCES; i++) {
 				if (resources_table[i] != NULL && resources_table[i]->status == STATUS_AVAILABLE) {
 					r = resources_table[i];
+					r->status = STATUS_BUSY;
 				}
 			}
 			pthread_mutex_unlock(&resource_mutex);
-
-			if (ret = send(r->sock, msg, sizeof(message), 0), ret <= 0) {
-				perror("Recv");
-				continue;
+			// if we found a resources send the job
+			if (r != NULL ) {
+				if (ret = send(r->sock, msg, sizeof(message), 0), ret <= 0) {
+					perror("Recv");
+					continue;
+				}
 			}
 		}
 	}

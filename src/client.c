@@ -54,14 +54,20 @@ int client_recv_res(int sockfd)
 {
 	message msg;
 	ssize_t ret = 0;
+	int jobDone = 0;
 
-	if (ret = recv(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
-		perror("Recv");
-		return -1;
-	}
-
-	printf("%s\n", msg.text);
-
+	while(!jobDone) {
+		if (ret = recv(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
+			perror("Recv");
+			return -1;
+		}
+	
+	
+		printf("%s\n", msg.text);
+		if (msg.header.req_type == TYPE_JOB_DONE) {
+			jobDone = 1;
+		}
+	};
 	return 0;
 }
 
