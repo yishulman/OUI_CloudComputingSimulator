@@ -10,6 +10,8 @@
 
 extern int running;
 
+int resource_id = 0;
+
 int resource_register(int sockfd)
 {
 	message msg;
@@ -29,7 +31,8 @@ int resource_register(int sockfd)
 
 	switch (msg.header.req_type) {
 		case TYPE_ACK:
-		printf("Registered successfully.\n");
+		resource_id = msg.header.job_id;
+		printf("Registered successfully resource ID %d .\n", resource_id);
 		break;
 
 		case TYPE_NACK:
@@ -41,7 +44,7 @@ int resource_register(int sockfd)
 		return -1;
 	}
 
-	return msg.header.job_id;
+	return resource_id;
 }
 
 void resource_unregister(int res_id, int sockfd)
@@ -97,6 +100,13 @@ int resource_run(int *running, int sockfd)
 		msg.header.req_type = TYPE_JOB_DONE;
 
 		if (ret = send(client_sock, &msg, sizeof(msg), 0), ret <= 0) {
+			perror("Send");
+			continue;
+		}
+		// Send job done to server as well
+		msg.header.source = SOURCE_RESOURCE;
+		msg.header.job_id = resource_id;
+		if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
 			perror("Send");
 			continue;
 		}

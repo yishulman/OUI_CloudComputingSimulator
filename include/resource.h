@@ -7,6 +7,7 @@ typedef struct __resource {
 	u32 sock;
 	u16 res_id;
 	u16 memory;
+	u16 cpu;
 	u16 status;
 } resource;
 

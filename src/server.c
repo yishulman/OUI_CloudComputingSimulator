@@ -112,6 +112,20 @@ int server_handle_resource_msg(int newsockfd, resource **table, message *msg)
 		server_remove_resource(msg->header.job_id, table);
 		break;
 
+		case TYPE_JOB_DONE:
+		
+			printf("Changin resource ID %d to available \n",msg->header.job_id );
+			pthread_mutex_lock(&resource_mutex);
+			for (int i = 0; i < MAX_RESOURCES; i++) {
+				if (resources_table[i] != NULL && resources_table[i]->status == STATUS_BUSY && resources_table[i]->res_id == msg->header.job_id) {
+					resources_table[i]->status = STATUS_AVAILABLE;
+				}
+			}
+			pthread_mutex_unlock(&resource_mutex);
+		break;
+
+
+
 		default:
 		fprintf(stderr, "Resource sent invalid message type: %d\n", msg->header.req_type);
 		ret = -1;
@@ -181,6 +195,7 @@ void server_tx(int sockfd)
 				if (resources_table[i] != NULL && resources_table[i]->status == STATUS_AVAILABLE) {
 					r = resources_table[i];
 					r->status = STATUS_BUSY;
+					printf("Changin resource ID %d to Busy \n",resources_table[i]->res_id );
 				}
 			}
 			pthread_mutex_unlock(&resource_mutex);
