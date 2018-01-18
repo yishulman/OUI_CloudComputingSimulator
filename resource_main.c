@@ -52,7 +52,6 @@ int main(int argc, char *argv[])
 	*running = 0;
 	close(sockfd);
 
-	pthread_join(thread, &ret_thread);
 
 	if (socket_wrap_connect(&sockfd, SERVER_IP, SERVER_PORT)) {
 		fprintf(stderr, "Resource init failed.\n");
@@ -65,6 +64,8 @@ int main(int argc, char *argv[])
 
 out:
 	close(sockfd);
+	printf("Resource shutdown\n");
 out_ret:
+	
 	return 0;
 }

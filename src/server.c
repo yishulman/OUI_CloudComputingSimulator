@@ -47,7 +47,7 @@ static int server_add_resource(int newsockfd, int res_id, resource **table)
 
 	pthread_mutex_unlock(&resource_mutex);
 
-	printf("Resource %d registered.\n", res_id);
+	printf("Resource %d registered. in table index %d\n", res_id, i);
 
 	return 0;
 }
@@ -199,6 +199,7 @@ void server_tx(int sockfd)
 					r->status = STATUS_BUSY;
 					printf("Sending Job to resource ID %d job %s \n",resources_table[i]->res_id, msg->text );
 					printf("Resource ID %d to Busy \n",resources_table[i]->res_id );
+					break;
 				}
 			}
 			pthread_mutex_unlock(&resource_mutex);
