@@ -62,6 +62,21 @@ void msg_queue_push(msg_queue *queue, message *msg)
 	}
 }
 
+void msg_queue_push_front(msg_queue *queue, message *msg)
+{
+	msg_node *node = malloc(sizeof(msg_node));
+	msg_node_init(node, msg, NULL);
+
+	if (queue->head == NULL) {
+		queue->head = node;
+		queue->tail = node;
+	}
+	else {
+		node->next = queue->head;
+		queue->head = node;
+	}
+}
+
 message* msg_queue_pop(msg_queue *queue)
 {
 	message *msg = queue->head->msg;

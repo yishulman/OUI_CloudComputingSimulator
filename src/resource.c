@@ -64,6 +64,7 @@ int resource_run(int *running, int sockfd)
 	message msg;
 	ssize_t ret;
 	int client_sock;
+	int server_sock;
 	pid_t child_pid;
 	int child_status;
 	FILE *fp;
@@ -103,13 +104,21 @@ int resource_run(int *running, int sockfd)
 			perror("Send");
 			continue;
 		}
+		
+		close(client_sock);
+
+		if (socket_wrap_connect(&server_sock, SERVER_IP, SERVER_PORT)) {
+			fprintf(stderr, "Resource server job done failed.\n");
+		}
 		// Send job done to server as well
 		msg.header.source = SOURCE_RESOURCE;
 		msg.header.job_id = resource_id;
-		if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
+		if (ret = send(server_sock, &msg, sizeof(msg), 0), ret <= 0) {
 			perror("Send");
 			continue;
 		}
+		close(server_sock);
+
 	}
 
 	return 0;

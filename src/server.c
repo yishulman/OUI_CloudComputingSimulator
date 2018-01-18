@@ -77,6 +77,9 @@ int server_handle_client_msg(int sockfd, msg_queue *queue, message *msg)
 		perror("Recv");
 		return -1;
 	}
+	
+	
+	printf("Registering new job : %s \n", msg->text);
 
 	pthread_mutex_lock(&queue_mutex);
 	msg_queue_push(queue, msg);
@@ -114,7 +117,7 @@ int server_handle_resource_msg(int newsockfd, resource **table, message *msg)
 
 		case TYPE_JOB_DONE:
 		
-			printf("Changin resource ID %d to available \n",msg->header.job_id );
+			printf("Resource ID %d to available \n",msg->header.job_id );
 			pthread_mutex_lock(&resource_mutex);
 			for (int i = 0; i < MAX_RESOURCES; i++) {
 				if (resources_table[i] != NULL && resources_table[i]->status == STATUS_BUSY && resources_table[i]->res_id == msg->header.job_id) {
@@ -152,7 +155,6 @@ void server_rx(int sockfd)
 	  		break;
 		}
 
-		printf("CONNECTED\n");
 
 		msg = malloc(sizeof(message));
 		memset(msg, 0, sizeof(message));
@@ -195,7 +197,8 @@ void server_tx(int sockfd)
 				if (resources_table[i] != NULL && resources_table[i]->status == STATUS_AVAILABLE) {
 					r = resources_table[i];
 					r->status = STATUS_BUSY;
-					printf("Changin resource ID %d to Busy \n",resources_table[i]->res_id );
+					printf("Sending Job to resource ID %d job %s \n",resources_table[i]->res_id, msg->text );
+					printf("Resource ID %d to Busy \n",resources_table[i]->res_id );
 				}
 			}
 			pthread_mutex_unlock(&resource_mutex);
@@ -205,6 +208,11 @@ void server_tx(int sockfd)
 					perror("Recv");
 					continue;
 				}
+			} else {
+				pthread_mutex_lock(&queue_mutex);
+				// push job back
+				msg_queue_push_front(&pending_queue, msg);
+				pthread_mutex_unlock(&queue_mutex);
 			}
 		}
 	}
