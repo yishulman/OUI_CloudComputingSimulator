@@ -10,11 +10,6 @@ void client_job_print_help()
 	printf("USAGE: run_job <client_ip> <command>\n");
 }
 
-void client_status_print_help()
-{
-	printf("USAGE: run_status <client_ip>\n");
-}
-
 int client_run_job(int sockfd, char* job, char *ip, short port)
 {
 	message msg;
@@ -68,10 +63,5 @@ int client_recv_res(int sockfd)
 			jobDone = 1;
 		}
 	};
-	return 0;
-}
-
-int client_run_status(int sockfd)
-{
 	return 0;
 }
