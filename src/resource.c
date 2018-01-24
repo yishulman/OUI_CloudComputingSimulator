@@ -12,12 +12,18 @@ extern int running;
 
 int resource_id = 0;
 
-int resource_register(int sockfd)
+void resource_print_help()
+{
+	printf("USAGE: run_resource <cpu_speed> <mem_size>\n");
+}
+
+
+int resource_register(int sockfd, u16 cpu, u16 mem)
 {
 	message msg;
 	ssize_t ret;
 
-	message_fill(&msg, SOURCE_RESOURCE, TYPE_ADD_RESOURCE, NULL, 0, 0, 0, NULL);
+	message_fill(&msg, SOURCE_RESOURCE, TYPE_ADD_RESOURCE, NULL, 0,cpu, mem, 0, NULL);
 
 	if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
 		perror("Send");
@@ -52,7 +58,7 @@ void resource_unregister(int res_id, int sockfd)
 	message msg;
 	ssize_t ret;
 
-	message_fill(&msg, SOURCE_RESOURCE, TYPE_REMOVE_RESOURCE, NULL, 0, 0, res_id, NULL);
+	message_fill(&msg, SOURCE_RESOURCE, TYPE_REMOVE_RESOURCE, NULL, 0, 0, 0, res_id, NULL);
 
 	if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
 		perror("Send");

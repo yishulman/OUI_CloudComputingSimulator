@@ -21,7 +21,7 @@ int client_run_job(int sockfd, char* job, char *ip, short port)
 	int newsockfd;
 	ssize_t ret = 0;
 
-	message_fill(&msg, SOURCE_CLIENT, TYPE_COMMAND, ip, port, 0, 1, job);
+	message_fill(&msg, SOURCE_CLIENT, TYPE_COMMAND, ip, port,0, 0, 1, job);
 
 	if (ret = send(sockfd, &msg, sizeof(msg), 0), ret <= 0) {
 		perror("Send");

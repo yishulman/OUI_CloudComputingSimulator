@@ -9,6 +9,7 @@ typedef struct __resource {
 	u16 memory;
 	u16 cpu;
 	u16 status;
+	int score;
 } resource;
 
 enum resource_status_e {
@@ -16,7 +17,8 @@ enum resource_status_e {
 	STATUS_BUSY,
 };
 
-int resource_register(int sockfd);
+void resource_print_help();
+int resource_register(int sockfd, u16 cpu, u16 mem);
 int resource_run(int *running, int sockfd);
 void resource_unregister(int res_id, int sockfd);
 

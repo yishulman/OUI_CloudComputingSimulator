@@ -20,7 +20,7 @@ void server_print_help()
 	printf("USAGE: cloudsrv <port>\n");
 }
 
-static int server_add_resource(int newsockfd, int res_id, resource **table)
+static int server_add_resource(int newsockfd, int res_id, int cpu, int mem, resource **table)
 {
 	resource *r = NULL;
 	int i;
@@ -42,7 +42,9 @@ static int server_add_resource(int newsockfd, int res_id, resource **table)
 
 	r->sock = newsockfd;
 	r->res_id = res_id;
-	r->memory = 10000;
+	r->memory = mem;
+	r->cpu = cpu;
+	r->score = mem / 8000 + cpu / 1000; 
 	r->status = STATUS_AVAILABLE;
 
 	pthread_mutex_unlock(&resource_mutex);
@@ -95,7 +97,7 @@ int server_handle_resource_msg(int newsockfd, resource **table, message *msg)
 
 	switch(msg->header.req_type) {
 		case TYPE_ADD_RESOURCE:
-		ret = server_add_resource(newsockfd, res_id, table);
+		ret = server_add_resource(newsockfd, res_id, msg->header.cpu, msg->header.memory, table);
 
 		if (0 == ret) {
 			msg->header.req_type = TYPE_ACK;
@@ -193,18 +195,20 @@ void server_tx(int sockfd)
 			pthread_mutex_unlock(&queue_mutex);
 
 			pthread_mutex_lock(&resource_mutex);
+			int max_score = 0;
 			for (i = 0; i < MAX_RESOURCES; i++) {
 				if (resources_table[i] != NULL && resources_table[i]->status == STATUS_AVAILABLE) {
-					r = resources_table[i];
-					r->status = STATUS_BUSY;
-					printf("Sending Job to resource ID %d job %s \n",resources_table[i]->res_id, msg->text );
-					printf("Resource ID %d to Busy \n",resources_table[i]->res_id );
-					break;
+					if (resources_table[i]->score > max_score) {
+						r = resources_table[i];
+						max_score = r->score;
+					}
 				}
 			}
-			pthread_mutex_unlock(&resource_mutex);
 			// if we found a resources send the job
 			if (r != NULL ) {
+				r->status = STATUS_BUSY;
+				printf("Sending Job to resource ID %d job %s \n",r->res_id, msg->text );
+				printf("Resource ID %d to Busy \n",r->res_id );
 				if (ret = send(r->sock, msg, sizeof(message), 0), ret <= 0) {
 					perror("Recv");
 					continue;
@@ -215,6 +219,7 @@ void server_tx(int sockfd)
 				msg_queue_push_front(&pending_queue, msg);
 				pthread_mutex_unlock(&queue_mutex);
 			}
+			pthread_mutex_unlock(&resource_mutex);
 		}
 	}
 }

@@ -10,6 +10,7 @@ typedef struct __msg_header{
 	u8	ip_addr[MAX_IP_ADDR];
 	u16 port_addr;
 	u16 memory;
+	u16 cpu;
 	u16 job_id;
 	u16 length;
 } message_header;
@@ -43,6 +44,7 @@ void message_fill(message *msg,
 					u8 req_type, 
 					const char* ip_addr, 
 					u16 port_addr, 
+					u16 cpu, 
 					u16 memory, 
 					u16 job_id, 
 					const char *text);

@@ -26,6 +26,18 @@ int main(int argc, char *argv[])
   	char 					c;
   	int 					res_id;
   	int 					*running = malloc(sizeof(int));
+	int					cpu;
+	int					mem;
+
+	if (argc < 3) {
+		resource_print_help();
+		printf("Running with default cpu and mem, 2GHz 8GB");
+		cpu = 2000;
+		mem = 8000;
+	} else {
+		sscanf(argv[1], "%d" ,&cpu );
+		sscanf(argv[2], "%d" ,&mem );
+	}
 
 	if (socket_wrap_connect(&sockfd, SERVER_IP, SERVER_PORT)) {
 		fprintf(stderr, "Resource init failed.\n");
@@ -34,7 +46,7 @@ int main(int argc, char *argv[])
 
 	printf("CONNECTED\n");
 
-	if (res_id = resource_register(sockfd), res_id < 0) {
+	if (res_id = resource_register(sockfd, cpu, mem), res_id < 0) {
 		fprintf(stderr, "Registration failed.\n");
 		goto out;
 	}
